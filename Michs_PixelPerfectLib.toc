@@ -1,0 +1,8 @@
+## Interface: 120007, 120100
+## Title: Mich's PixelPerfectLib
+## Notes: Pixel-perfect sizing and scaling helpers for Mich's addons.
+## Author: Mich
+## Version: 1.0.0
+
+Libs/LibStub/LibStub.lua
+Libs/MichsPixelPerfectLib-1.0/MichsPixelPerfectLib-1.0.lua
