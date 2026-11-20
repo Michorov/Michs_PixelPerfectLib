@@ -1,4 +1,4 @@
-## Interface: 120007, 120100
+## Interface: 16001, 120105
 ## Title: Mich's PixelPerfectLib
 ## Category: Mich's Toolkit
 ## Notes: Pixel-perfect sizing and scaling helpers for Mich's addons.
