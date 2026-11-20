@@ -67,7 +67,10 @@ local _, addon = ...
 
 local PP = addon.PixelPerfect
 
-local frame = CreateFrame("Frame", nil, UIParent)
+local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+
+frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8" })
+frame:SetBackdropColor(0.2, 0.2, 0.2, 1)
 
 PP:RegisterForUpdate(function()
     frame:SetSize(PP:ToUI(240), PP:ToUI(120))
@@ -81,6 +84,8 @@ end)
 - `RegisterForUpdate(callback)` runs immediately when registered and again whenever the global scale, UI scale, or screen resolution changes.
 - Create the scaler before any files that use it.
 
+For additional configuration and examples, see the sections below.
+
 ## API Reference
 
 | Method | Description |
@@ -91,24 +96,14 @@ end)
 | `CenterElement(element, parent, x, y)` | Centers an element using raw offsets. |
 | `RegisterForUpdate(callback)` | Runs a callback immediately and on scale or resolution changes. |
 
-For additional configuration and examples, see the sections below.
-
 ## How To Use
+
 
 ### Create Scaler
 
-Create one scaler for your addon and reuse it everywhere.<br>
-This keeps your global scale setting consistent across all files.
+As shown in Quick Start, create one scaler for your addon and reuse it everywhere to keep the global scale consistent.
 
-Example:
-
-```lua
-local _, addon = ...
-
-addon.PixelPerfect = LibStub("MichsPixelPerfectLib-2.0"):CreateScaler()
-```
-
-Then use the same scaler from other files:
+Access the shared scaler from other files:
 
 ```lua
 local _, addon = ...
@@ -121,9 +116,9 @@ local PP = addon.PixelPerfect
 
 The scaler must be created before any code uses it.
 
-If the file that creates your scaler loads before the rest of your addon files, later files can use `addon.PixelPerfect` directly.
+If the file that creates your scaler loads first, other files can access `addon.PixelPerfect` directly.
 
-If the file that creates your scaler loads after the rest of your addon files, those files should only define tables and functions at load time. Access `addon.PixelPerfect` inside an initialization function after the scaler is created.
+Otherwise, access the scaler inside an initialization function after it has been created.
 
 ```lua
 -- MainPanel.lua
@@ -132,9 +127,9 @@ local _, addon = ...
 addon.MainPanel = {}
 
 function addon.MainPanel:Initialize()
-	local PP = addon.PixelPerfect
+    local PP = addon.PixelPerfect
 
-	-- Use PP here.
+    -- Use PP here.
 end
 ```
 
@@ -172,7 +167,7 @@ Use `ToUI` for sizes, font sizes, and `SetPoint` offsets. Pass raw offsets to `C
 
 `ToUI(value)` converts the value into resolution-scaled, pixel-snapped UI units.
 
-Sizes and offsets scale with the screen's physical height, using 1080p as the baseline:
+Sizes and offsets scale with the game's display height, using 1080p as the baseline:
 
 ```text
 value -> resolution scale -> global scale -> round to whole pixels -> UI units
@@ -261,7 +256,7 @@ The updates will be executed when:
 
 - The callback is registered.
 - Your addon changes global scale through `SetGlobalScale`.
-- The game UI scale or monitor resolution changes.
+- The game UI scale or game display resolution changes.
 
 Basic `RegisterForUpdate` example:
 
