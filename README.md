@@ -29,10 +29,10 @@ Copy the `Libs` folder into your addon and load LibStub before Michs_PixelPerfec
 
 ```toc
 Libs/LibStub/LibStub.lua
-Libs/MichsPixelPerfectLib-1.0/MichsPixelPerfectLib-1.0.lua
+Libs/MichsPixelPerfectLib-2.0/MichsPixelPerfectLib-2.0.lua
 ```
 
-The library files must be loaded before any addon file that calls `LibStub("MichsPixelPerfectLib-1.0")`.
+The library files must be loaded before any addon file that calls `LibStub("MichsPixelPerfectLib-2.0")`.
 
 Do not add `Michs_PixelPerfectLib` as a dependency when embedding the library files directly.
 
@@ -50,7 +50,7 @@ Example:
 ```lua
 local _, addon = ...
 
-addon.PixelPerfect = LibStub("MichsPixelPerfectLib-1.0"):CreateScaler()
+addon.PixelPerfect = LibStub("MichsPixelPerfectLib-2.0"):CreateScaler()
 ```
 
 Then use the same scaler from other files:
@@ -87,7 +87,7 @@ end
 -- Core.lua
 local _, addon = ...
 
-addon.PixelPerfect = LibStub("MichsPixelPerfectLib-1.0"):CreateScaler()
+addon.PixelPerfect = LibStub("MichsPixelPerfectLib-2.0"):CreateScaler()
 
 addon.MainPanel:Initialize()
 ```
@@ -110,17 +110,17 @@ addon.PixelPerfect:SetGlobalScale(1.25)
 
 ### Sizing And Positioning
 
-Every size or offset value should go through the scaling API before it is applied to an element.
+Use `ToUI` for sizes, font sizes, and `SetPoint` offsets. Pass raw offsets to `CenterElement`, which scales them internally.
 
 <details>
-<summary><strong>ToUI & ToUIScaled</strong></summary>
+<summary><strong>ToUI</strong></summary>
 
-`ToUI(value)` converts the value into pixel-snapped UI units.
+`ToUI(value)` converts the value into resolution-scaled, pixel-snapped UI units.
 
-Use `ToUI` when the value should stay the same pixel count on every resolution:
+Sizes and offsets scale with the screen's physical height, using 1080p as the baseline:
 
 ```text
-value -> global scale -> UI units
+value -> resolution scale -> global scale -> round to whole pixels -> UI units
 ```
 
 Basic `ToUI` usage:
@@ -144,43 +144,14 @@ frame:SetPoint(
 )
 ```
 
-`ToUIScaled(value)` converts the value into screen resolution scaled pixel-snapped UI units.
-
-Use `ToUIScaled` when the value should scale up or down with the user's resolution:
-
-```text
-value -> resolution scale -> global scale -> UI units
-```
-
-Basic `ToUIScaled` usage:
-
-```lua
-local PP = addon.PixelPerfect
-
-local frame = CreateFrame("Frame", nil, UIParent)
-local width = 240
-local height = 120
-local offsetX = 16
-local offsetY = -16
-
-frame:SetSize(PP:ToUIScaled(width), PP:ToUIScaled(height))
-frame:SetPoint(
-	"TOPLEFT",
-	UIParent,
-	"TOPLEFT",
-	PP:ToUIScaled(offsetX),
-	PP:ToUIScaled(offsetY)
-)
-```
-
 </details>
 
 <details>
-<summary><strong>ScaleFont</strong></summary>
+<summary><strong>Font Size</strong></summary>
 
-`ScaleFont(value)` scales a font size using the same global scale.
+Use `ToUI(value)` for font sizes, just as for other dimensions.
 
-Basic `ScaleFont` usage:
+Basic font sizing example:
 
 ```lua
 local PP = addon.PixelPerfect
@@ -189,7 +160,7 @@ local frame = CreateFrame("Frame", nil, UIParent)
 local fontString = frame:CreateFontString(nil, "OVERLAY")
 local fontSize = 20
 
-fontString:SetFont("Fonts\\FRIZQT__.TTF", PP:ScaleFont(fontSize), "OUTLINE")
+fontString:SetFont("Fonts\\FRIZQT__.TTF", PP:ToUI(fontSize), "OUTLINE")
 ```
 
 </details>
@@ -202,7 +173,7 @@ fontString:SetFont("Fonts\\FRIZQT__.TTF", PP:ScaleFont(fontSize), "OUTLINE")
 Avoid using `SetPoint("CENTER", parent, "CENTER", 0, 0)`.<br>
 `SetPoint` is fine to use for non-centered anchors.
 
-The offsets passed into `CenterElement` must already go through `ToUI` or `ToUIScaled`.
+Pass raw offsets into `CenterElement`. It applies resolution and global scaling internally; do not convert these offsets with `ToUI` first.
 
 Basic `CenterElement` usage:
 
@@ -215,12 +186,12 @@ local height = 120
 local offsetX = 0
 local offsetY = 0
 
-frame:SetSize(PP:ToUIScaled(width), PP:ToUIScaled(height))
+frame:SetSize(PP:ToUI(width), PP:ToUI(height))
 PP:CenterElement(
 	frame,
 	UIParent,
-	PP:ToUIScaled(offsetX),
-	PP:ToUIScaled(offsetY)
+	offsetX,
+	offsetY
 )
 ```
 
@@ -255,14 +226,14 @@ local offsetY = 0
 local fontSize = 20
 
 local function UpdateLayout()
-	frame:SetSize(PP:ToUIScaled(width), PP:ToUIScaled(height))
+	frame:SetSize(PP:ToUI(width), PP:ToUI(height))
 	PP:CenterElement(
 		frame,
 		UIParent,
-		PP:ToUIScaled(offsetX),
-		PP:ToUIScaled(offsetY)
+		offsetX,
+		offsetY
 	)
-	fontString:SetFont("Fonts\\FRIZQT__.TTF", PP:ScaleFont(fontSize), "OUTLINE")
+	fontString:SetFont("Fonts\\FRIZQT__.TTF", PP:ToUI(fontSize), "OUTLINE")
 end
 
 PP:RegisterForUpdate(function()
@@ -310,31 +281,31 @@ MainPanel.titleText:SetText("Pixel Perfect")
 MainPanel.closeButton = CreateFrame("Button", nil, MainPanel, "UIPanelButtonTemplate")
 
 local function UpdateMainPanelLayout()
-	MainPanel:SetSize(PP:ToUIScaled(240), PP:ToUIScaled(120))
-	PP:CenterElement(MainPanel, UIParent, PP:ToUIScaled(0), PP:ToUIScaled(0))
+	MainPanel:SetSize(PP:ToUI(240), PP:ToUI(120))
+	PP:CenterElement(MainPanel, UIParent, 0, 0)
 end
 
 local function UpdateTitleLayout()
-	MainPanel.titleText:SetFont("Fonts\\FRIZQT__.TTF", PP:ScaleFont(14), "OUTLINE")
+	MainPanel.titleText:SetFont("Fonts\\FRIZQT__.TTF", PP:ToUI(14), "OUTLINE")
 	MainPanel.titleText:ClearAllPoints()
 	MainPanel.titleText:SetPoint(
 		"TOPLEFT",
 		MainPanel,
 		"TOPLEFT",
-		PP:ToUIScaled(12),
-		PP:ToUIScaled(-12)
+		PP:ToUI(12),
+		PP:ToUI(-12)
 	)
 end
 
 local function UpdateCloseButtonLayout()
-	MainPanel.closeButton:SetSize(PP:ToUIScaled(24), PP:ToUIScaled(24))
+	MainPanel.closeButton:SetSize(PP:ToUI(24), PP:ToUI(24))
 	MainPanel.closeButton:ClearAllPoints()
 	MainPanel.closeButton:SetPoint(
 		"TOPRIGHT",
 		MainPanel,
 		"TOPRIGHT",
-		PP:ToUIScaled(-12),
-		PP:ToUIScaled(-12)
+		PP:ToUI(-12),
+		PP:ToUI(-12)
 	)
 end
 
