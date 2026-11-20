@@ -1,8 +1,22 @@
 # Michs_PixelPerfectLib
 
-Library to help with pixel perfect sizes and borders while creating and positioning elements
+Library to help with pixel perfect sizes while creating and positioning elements
 
-<br>
+## How Scaling Works
+
+The library uses 1080p as its baseline and automatically scales dimensions based on the game's display resolution
+
+For example, using `ToUI(100)` with the default global scale of 100%:
+
+| Game Resolution | Physical Size |
+|---|---|
+| 1920×1080 | 100 pixels |
+| 2560×1440 | 133 pixels |
+| 3840×2160 | 200 pixels |
+
+Dimensions are rounded to whole physical pixels and converted into WoW UI units, accounting for the game's UI scale.
+
+The global scale can also be adjusted between 50% and 200% using `SetGlobalScale()`.
 
 ## Installation
 
@@ -13,9 +27,9 @@ Michs_PixelPerfectLib can be installed in one of two ways:
 
 ### Standalone Dependency
 
-Use this setup when you want users to install `Michs_PixelPerfectLib` separately from CurseForge.
+Use this setup when you want users to install [Michs_PixelPerfectLib from CurseForge](https://www.curseforge.com/wow/addons/michs-pixelperfectlib) separately.
 
-Then add it as a required dependency in your addon's `.toc` file:
+Add it as a required dependency in your addon's `.toc` file:
 
 ```toc
 ## Dependencies: Michs_PixelPerfectLib
@@ -36,7 +50,48 @@ The library files must be loaded before any addon file that calls `LibStub("Mich
 
 Do not add `Michs_PixelPerfectLib` as a dependency when embedding the library files directly.
 
-<br>
+## Quick Start
+
+Create a scaler once and reuse it throughout your addon.
+
+```lua
+local _, addon = ...
+
+addon.PixelPerfect = LibStub("MichsPixelPerfectLib-2.0"):CreateScaler()
+```
+
+Use `ToUI` for dimensions and offsets, and `CenterElement` for centered positioning.
+
+```lua
+local _, addon = ...
+
+local PP = addon.PixelPerfect
+
+local frame = CreateFrame("Frame", nil, UIParent)
+
+PP:RegisterForUpdate(function()
+    frame:SetSize(PP:ToUI(240), PP:ToUI(120))
+    PP:CenterElement(frame, UIParent, 0, 0)
+end)
+```
+
+**Important:**
+- `ToUI(value)` converts a value into resolution-scaled, pixel-snapped UI units.
+- `CenterElement(element, parent, offsetX, offsetY)` takes **raw offsets**. Do not apply `ToUI` to them.
+- `RegisterForUpdate(callback)` runs immediately when registered and again whenever the global scale, UI scale, or screen resolution changes.
+- Create the scaler before any files that use it.
+
+## API Reference
+
+| Method | Description |
+|---|---|
+| `CreateScaler()` | Creates a new scaler instance. |
+| `SetGlobalScale(scale)` | Sets the global scale (0.5–2.0, default 1.0). |
+| `ToUI(value)` | Converts a value to resolution-scaled, pixel-snapped UI units. |
+| `CenterElement(element, parent, x, y)` | Centers an element using raw offsets. |
+| `RegisterForUpdate(callback)` | Runs a callback immediately and on scale or resolution changes. |
+
+For additional configuration and examples, see the sections below.
 
 ## How To Use
 
@@ -202,7 +257,7 @@ PP:CenterElement(
 Register an update callback after creating your elements.<br>
 The library will run this callback when your layout should be recalculated.
 
-The Updates will be executed when:
+The updates will be executed when:
 
 - The callback is registered.
 - Your addon changes global scale through `SetGlobalScale`.
@@ -261,8 +316,6 @@ General updating guidelines:
 - Update callbacks are executed in the order they are registered.
 - Update size before position within each element.
 - Update parent elements before child elements.
-
-<br>
 
 ## Examples
 
